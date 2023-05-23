@@ -7,6 +7,10 @@ name = "pypi"
 pymongo = "*"
 fastapi = "*"
 uvicorn = "*"
+python-jose = {extras = ["cryptography"], version = "*"}
+passlib = {extras = ["bcrypt"], version = "*"}
+python-multipart = "*"
+pydantic = {extras = ["dotenv"], version = "*"}
 
 [dev-packages]
 autopep8 = "*"

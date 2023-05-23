@@ -1,11 +1,8 @@
 from fastapi import FastAPI
-from pymongo import MongoClient
 from fastapi.middleware.cors import CORSMiddleware
-from .settings import settings
-
-from .measures import main as measures_main
-from .sensors import main as sensors_main
-from .users import main as users_main
+from .api.endpoints.auth import router as auth_router
+from .api.endpoints.measures import router as measures_router
+from .api.endpoints.feedbacks import router as feedbacks_router
 
 app = FastAPI()
 
@@ -17,18 +14,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# @app.on_event("startup")
-# def startup_db_client():
-#    app.mongodb_client = MongoClient(settings.DB_URL)
-#    app.database = app.mongodb_client[settings.DB_NAME]
-#
-#
-# @app.on_event("shutdown")
-# def shutdown_db_client():
-#    app.mongodb_client.close()
-
-
-app.include_router(measures_main.router)
-app.include_router(sensors_main.router)
-app.include_router(users_main.router)
+app.include_router(auth_router)
+app.include_router(measures_router)
+app.include_router(feedbacks_router)
