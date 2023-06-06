@@ -4,12 +4,12 @@ from pydantic import BaseModel
 class MeasureBase(BaseModel):
     temperature: float
     humidity: float
-    timestamp: int
 
 
 class Measure(MeasureBase):
     id: str
     owner_id: str
+    timestamp: int
 
 
 class MeasureCreate(MeasureBase):

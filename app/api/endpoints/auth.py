@@ -30,19 +30,22 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         username: str = payload.get("sub")
         if username is None:
             raise HTTPException(
-                status_code=401, detail="Invalid authentication credentials")
+                status_code=401, detail="Invalid authentication credentials"
+            )
         token_data = {"username": username}
     except JWTError:
         raise HTTPException(
-            status_code=401, detail="Invalid authentication credentials")
+            status_code=401, detail="Invalid authentication credentials"
+        )
     user = readUserByUsername(username=token_data["username"])
     if user is None:
         raise HTTPException(
-            status_code=401, detail="Invalid authentication credentials")
+            status_code=401, detail="Invalid authentication credentials"
+        )
     return {
         "username": user["username"],
         "id": str(user["_id"]),
-        "hashed_password": user["hashed_password"]
+        "hashed_password": user["hashed_password"],
     }
 
 
@@ -70,10 +73,7 @@ def authenticate_api_key(api_key: str):
     user = database.users.find_one({"api_key": api_key})
     if not user:
         return False
-    return {
-        "username": user["username"],
-        "id": str(user["_id"])
-    }
+    return {"username": user["username"], "id": str(user["_id"])}
 
 
 def authenticate_user(username: str, password: str):
@@ -107,16 +107,16 @@ def createUser(username: str, password: str):
 
 
 @router.post("/change-password")
-async def change_password(old_password: str, new_password: str, user: dict = Depends(get_current_user)):
+async def change_password(
+    old_password: str, new_password: str, user: dict = Depends(get_current_user)
+):
     if not verify_password(old_password, user["hashed_password"]):
-        raise HTTPException(
-            status_code=401, detail="Incorrect password")
+        raise HTTPException(status_code=401, detail="Incorrect password")
 
     new_password_hash = get_password_hash(new_password)
 
     database.users.update_one(
-        {"_id": ObjectId(user["id"])},
-        {"$set": {"hashed_password": new_password_hash}}
+        {"_id": ObjectId(user["id"])}, {"$set": {"hashed_password": new_password_hash}}
     )
 
     return {"message": "Password changed"}
@@ -124,10 +124,6 @@ async def change_password(old_password: str, new_password: str, user: dict = Dep
 
 @router.post("/signup")
 async def signup(username: str, password: str):
-    '''
-    Registra um novo usuário no banco de dados
-    '''
-
     if readUserByUsername(username):
         return {"message": "Username already exists"}
 
@@ -136,19 +132,14 @@ async def signup(username: str, password: str):
 
 @router.post("/token")
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    '''
-    Faz login e gera um token de acesso
-    '''
-
     user = authenticate_user(form_data.username, form_data.password)
 
     if not user:
-        raise HTTPException(
-            status_code=401, detail="Incorrect username or password")
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
 
     token = create_access_token(
         data={"sub": user["username"]},
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
     return {"access_token": token, "token_type": "bearer"}
@@ -156,22 +147,18 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @router.get("/@me")
 async def read_current_user(user: dict = Depends(get_current_user)):
-    '''
-    Retorna o usuário atual
-    '''
-    return user
+    return {
+        "username": user["username"],
+        "id": user["id"],
+    }
 
 
 @router.post("/api_key")
 async def generate_api_key(user: dict = Depends(get_current_user)):
-    '''
-    Gera uma nova chave de API para poder criar novas medidções na rota measures
-    '''
     new_api_key = pwd_context.hash(create_api_key())
 
     database.users.update_one(
-        {"_id": ObjectId(user["id"])},
-        {"$set": {"api_key": new_api_key}}
+        {"_id": ObjectId(user["id"])}, {"$set": {"api_key": new_api_key}}
     )
 
     return {"api_key": new_api_key}
@@ -179,8 +166,4 @@ async def generate_api_key(user: dict = Depends(get_current_user)):
 
 @router.post("/recover-password")
 async def recover_password(username: str):
-    '''
-    Envia um email com um link para redefinir a senha
-    '''
-
     user = readUserByUsername(username)

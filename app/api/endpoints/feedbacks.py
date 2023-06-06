@@ -5,10 +5,7 @@ from bson.objectid import ObjectId
 
 from ...api.models.feedbacks import Feedback, FeedbackCreate
 
-router = APIRouter(
-    prefix="/feedbacks",
-    tags=["feedbacks"]
-)
+router = APIRouter(prefix="/feedbacks", tags=["feedbacks"])
 
 
 def feedback_serializer(feedback):
@@ -26,7 +23,6 @@ def feedbacks_serializer(feedbacks):
 
 @router.post("/", response_model=Feedback)
 async def create_feedback(feedback: FeedbackCreate, user=Depends(get_current_user)):
-
     feedback = dict(feedback)
 
     new_feedback = {
@@ -42,22 +38,16 @@ async def create_feedback(feedback: FeedbackCreate, user=Depends(get_current_use
 
 @router.get("/", response_model=list[Feedback])
 async def read_feedbacks(user=Depends(get_current_user)):
-    return feedbacks_serializer(list(database.feedbacks.find({"owner_id": ObjectId(user["id"])})))
-
-
-@router.get("/{feedback_id}", response_model=Feedback)
-async def read_feedback(feedback_id: str, user=Depends(get_current_user)):
-    feedback = database.feedbacks.find_one(
-        {"_id": ObjectId(feedback_id), "owner_id": ObjectId(user["id"])})
-    if not feedback:
-        raise HTTPException(status_code=404, detail="Feedback not found")
-    return feedback_serializer(feedback)
+    return feedbacks_serializer(
+        list(database.feedbacks.find({"owner_id": ObjectId(user["id"])}))
+    )
 
 
 @router.delete("/{feedback_id}", response_model=Feedback)
 async def delete_feedback(feedback_id: str, user=Depends(get_current_user)):
     feedback = database.feedbacks.find_one(
-        {"_id": ObjectId(feedback_id), "owner_id": ObjectId(user["id"])})
+        {"_id": ObjectId(feedback_id), "owner_id": ObjectId(user["id"])}
+    )
     if not feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
     database.feedbacks.delete_one({"_id": ObjectId(feedback_id)})
